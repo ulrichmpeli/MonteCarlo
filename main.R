@@ -19,8 +19,8 @@ source("./generate_queue.R")
 # ========== 2.CHOIX DES PARAMETRES ============================================
 
 start.prog = Sys.time()
-Tmax = 10000
-lambda = 70 #lambda grand <=> les clients arrivent rapidement
+Tmax = 100
+lambda =.7 #lambda grand <=> les clients arrivent rapidement
 mu = .3 #mu grand <=> les services sont rendus rapidement
 
 k_X = 1 #k_X = 1 pour exponentielle
@@ -75,4 +75,39 @@ cat(sprintf("Nombre moyen de clients : %.2f \n\n", (N[-1,3]%*%(N[-1,1]-N[-dim(N)
 
 end.prog = Sys.time()
 cat(sprintf("Programme : %.2fs\n \n", difftime(end.prog, start.prog, units = "secs")))
+
+# ============== 6.CALCUL DES PROBABILITES =========================================
+
+# Pilot Stage
+l=20
+l0 = 8
+N1 = 1000
+
+list.X = list()
+list.Y = list()
+list.N = list()
+
+for(n1 in 1:N1){
+  # inilisation
+  if(n1 == 1){
+    list.X = list(generate_arrivals(Tmax, lambda, k_X))
+    list.Y = list(generate_services(list.X[[n1]], mu, k_Y))
+    list.N = list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3])
+  }else{
+    list.X = c(list.X, list(generate_arrivals(Tmax, lambda, k_X)))
+    list.Y = c(list.Y, list(generate_services(list.X[[n1]], mu, k_Y)))
+    list.N = c(list.N, list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3]))
+  }
+}
+
+N = length(list.N)
+
+source("./indicator_event.R")
+source("./estimate_f.R")
+source("./estimate_W.R")
+source("./update_v.R")
+
+new_v = update_v(lambda0, mu0, list.N, list.X, list.Y, lambda, mu, l0, N)
+print(new_v)
+
 
