@@ -19,9 +19,9 @@ source("./generate_queue.R")
 # ========== 2.CHOIX DES PARAMETRES ============================================
 
 start.prog = Sys.time()
-Tmax = 100
-lambda =.7 #lambda grand <=> les clients arrivent rapidement
-mu = .3 #mu grand <=> les services sont rendus rapidement
+Tmax = 500
+lambda =.3 #lambda grand <=> les clients arrivent rapidement
+mu = .7 #mu grand <=> les services sont rendus rapidement
 
 k_X = 1 #k_X = 1 pour exponentielle
 k_Y = 1 #k_Y = 1 pour exponentielle
@@ -80,8 +80,8 @@ cat(sprintf("Programme : %.2fs\n \n", difftime(end.prog, start.prog, units = "se
 
 # Pilot Stage
 l=20
-l0 = 8
-N1 = 1000
+l0 = 2
+N1 = 100
 
 list.X = list()
 list.Y = list()
