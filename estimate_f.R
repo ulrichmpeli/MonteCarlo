@@ -1,29 +1,23 @@
-estimate_f = function(lambda, mu, list.X, list.Y, k_X, k_Y){
-  # INPUT lambda  :
+estimate_f = function(lambda, mu, list.dX, list.dY, k_X, k_Y){
+  # INPUT lambda  : 
   #       k_X     :
   #       mu      :
   #       k_Y     : 
-  #       queue   : la queue
+  #       list.dX : liste contenant les temps inter-arrivée
+  #       list.dY : liste contenant les temps inter-services
   # OUTPUT        : estimation de f(X,v) (cf article formule 11)
   
-  list.interarrivals = list()
-  for(n in 1:N){
-    list.interarrivals[[n]] = list.X[[n]][2:length(list.X[[n]])] - list.X[[n]][1:length(list.X[[n]])-1]
-  }
+  # nombre de listes
+  nb.Queues = length(list.dX)
   
-  list.interservices = list()
-  for(n in 1:N){
-    list.interservices[[n]] = list.Y[[n]][1:length(list.Y[[n]])] - list.X[[n]][1:length(list.X[[n]])]
-  }
+  # initialisation des vecteurs contenant l'estimation de f pour chacun des queues
+  vect.prod_f_lambda = vector(length = nb.Queues)
+  vect.prod_f_mu = vector(length = nb.Queues)
+  vect.prod = vector(length = nb.Queues)
   
-  nb = length(list.N)
-  
-  vect.prod_f_lambda = vector(length = nb)
-  vect.prod_f_mu = vector(length = nb)
-  vect.prod = vector(length = nb)
-  for(n in 1:nb){
-    vect.prod_f_lambda[[n]] = prod(dweibull(list.interarrivals[[n]], scale = 1/lambda, shape = k_X))
-    vect.prod_f_mu[[n]] = prod(dweibull(list.interservices[[n]], scale = 1/mu, shape = k_Y))
+  for(n in 1:nb.Queues){
+    vect.prod_f_lambda[[n]] = prod(dweibull(list.dX[[n]], scale = 1/lambda, shape = k_X))
+    vect.prod_f_mu[[n]] = prod(dweibull(list.dY[[n]], scale = 1/mu, shape = k_Y))
     vect.prod[[n]] = vect.prod_f_lambda[[n]] * vect.prod_f_mu[[n]]
   }
   

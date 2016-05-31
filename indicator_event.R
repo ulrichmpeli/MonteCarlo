@@ -1,12 +1,16 @@
-indicator_event = function(list.N, l){
-  # INPUT  	list.N  : liste des vecteurs du nombre de clients
-  #         l       : le nombre de client maximale
+indicator_event = function(list.Q, l0){
+  # INPUT  	list.Q  : liste des vecteurs du nombre de clients
+  #         l0      : le nombre de client maximal
+  # OUTPUT          : un vecteur indiquant si les queues ont dépassé le seuil l0
   
-  nb = length(list.N)
-  vect.maxN = vector(length = nb)  
-  for(n in 1:nb){
-    vect.maxN[[n]] = max(list.N[[n]])
+  # nombre de queues
+  nb.Queues = length(list.Q)
+  
+  # vecteur contenant le nombre maximal de clients dans les queues
+  vect.maxQ = vector(length = nb.Queues)  
+  for(n in 1:nb.Queues){
+    vect.maxQ[[n]] = max(list.Q[[n]])
   }
   
-  return(vect.maxN >= l)
+  return(vect.maxQ >= l0)
 }

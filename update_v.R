@@ -1,46 +1,44 @@
-update_v = function(lambda0, mu0, list.N, list.X, list.Y, lambda, mu, l, N){
-  # INPUT 
+update_v = function(lambda0, mu0, list.dX, list.dY, list.Q, lambda, mu, l0){
+  # INPUT   lambda0 : lambda initial
+  #         mu0     : mu initial
+  #         lambda  : lambda actuel
+  #         mu      : mu actuel
+  #         list.dX : liste contenant les temps inter-arrivÃ©e
+  #         list.dY : liste contenant les temps inter-services
+  #         list.Q  : liste contenant le nombre de clients dans la queue
+  #         l0      : nombre de clients Ã  ne pas dÃ©passer   
   # OUTPUT
   
-  # préambule
+  # nombre de queues
+  nb.Queues = length(list.Q)
   
-  list.interarrivals = list()
-  for(n in 1:N){
-    list.interarrivals[[n]] = list.X[[n]][2:length(list.X[[n]])] - list.X[[n]][1:length(list.X[[n]])-1]
-  }
-  
-  list.interservices = list()
-  for(n in 1:N){
-    list.interservices[[n]] = list.Y[[n]][1:length(list.Y[[n]])] - list.X[[n]][1:length(list.X[[n]])]
-  }
-  
-  #calculs pour le numérateur et le dénominateur
-  vect.H = indicator_event(list.N,l)
-  lambda0 = lambda
-  mu0 = mu
-  f1 = estimate_f(lambda0, mu0, list.X, list.Y, k_X, k_Y)
-  f2 = estimate_f(lambda, mu, list.X, list.Y, k_X, k_Y)
+  #calcul des indicatrices de dÃ©passement de seuil
+  vect.H = indicator_event(list.Q,l0)
+
+  #calcul des pondÃ©rations W
+  f1 = estimate_f(lambda0, mu0, list.dX, list.dY, k_X, k_Y)
+  f2 = estimate_f(lambda, mu, list.dX, list.dY, k_X, k_Y)
   vect.W = estimate_W(f1, f2)
   
   # calcul du somme des Ykj
-  vect.sum_Y_lambda = vector(length = N)
-  vect.sum_Y_mu = vector(length = N)
+  vect.sum_Y_lambda = vector(length = nb.Queues)
+  vect.sum_Y_mu = vector(length = nb.Queues)
   
-  for(n in 1:N){
-    vect.sum_Y_lambda[n] = sum(list.interarrivals[[n]])   
-    vect.sum_Y_mu[n] = sum(list.interservices[[n]])      
+  for(n in 1:nb.Queues){
+    vect.sum_Y_lambda[n] = sum(list.dX[[n]])   
+    vect.sum_Y_mu[n] = sum(list.dY[[n]])      
   }
     
   # calcul du somme des tauk
-  vect.tau_lambda = vector(length = N)
-  vect.tau_mu = vector(length = N)
+  vect.tau_lambda = vector(length = nb.Queues)
+  vect.tau_mu = vector(length = nb.Queues)
   
-  for(n in 1:N){
-    vect.tau_lambda[n] = length(list.interarrivals[[n]])
-    vect.tau_mu[n] = length(list.interservices[[n]])   
+  for(n in 1:nb.Queues){
+    vect.tau_lambda[n] = length(list.dX[[n]])
+    vect.tau_mu[n] = length(list.dY[[n]])   
   }
   
-  # calcul du numérateur
+  # calcul du num?rateur
   num_lambda = (vect.H * vect.W) %*% vect.sum_Y_lambda
     
   num_mu = (vect.H * vect.W) %*% vect.sum_Y_mu
