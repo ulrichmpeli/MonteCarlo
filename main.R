@@ -10,6 +10,7 @@
 
 # ========== 1.PREAMBULE =======================================================
 
+
 rm(list=ls())
 cat("\014") 
 
@@ -21,7 +22,7 @@ source("./generate_queue.R")
 
 start.prog = Sys.time()
 Tmax = 100
-lambda = .3 #lambda grand <=> les clients arrivent rapidement
+lambda = 0.3 #lambda grand <=> les clients arrivent rapidement
 mu = .7     #mu grand <=> les services sont rendus rapidement
 
 k_X = 1   #k_X = 1 pour exponentielle
@@ -35,7 +36,7 @@ end.time = Sys.time()
 cat(sprintf("Génération de X : %.2fs\n", end.time - start.time))
 
 start.time = Sys.time()
-Y = generate_services(X, mu, k_Y)
+Y = generate_services(X, mu, k_Y, Tmax)
 end.time = Sys.time()
 cat(sprintf("Génération de Y : %.2fs\n", end.time - start.time))
 
@@ -60,7 +61,7 @@ hist(X[-1]-X[-length(X)], main = "Distribution des arrivées",
      xlab = "", ylab="", breaks = Tmax/10, freq = FALSE)
 lines(abs, dweibull(abs, scale = 1/lambda, shape = k_X), col = "red")
 
-hist(Y-X, main = "Distribution des sorties", 
+hist(Y[-1]-Y[-length(Y)], main = "Distribution des sorties", 
      xlab = "", ylab="", breaks = Tmax/10, freq = FALSE)
 lines(abs, dweibull(abs, scale = 1/mu, shape = k_Y), col = "red")
 
@@ -82,7 +83,7 @@ cat(sprintf("Programme : %.2fs\n \n", difftime(end.prog, start.prog, units = "se
 l=20
 
 # Pilot Stage
-l0 = 2
+l0 = 8
 N1 = 100
 
 list.X = list()
@@ -94,11 +95,11 @@ for(n1 in 1:N1){
   # inilisation
   if(n1 == 1){
     list.X = list(generate_arrivals(Tmax, lambda, k_X))
-    list.Y = list(generate_services(list.X[[n1]], mu, k_Y))
+    list.Y = list(generate_services(list.X[[n1]], mu, k_Y, Tmax))
     list.Q = list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3])
   }else{
     list.X = c(list.X, list(generate_arrivals(Tmax, lambda, k_X)))
-    list.Y = c(list.Y, list(generate_services(list.X[[n1]], mu, k_Y)))
+    list.Y = c(list.Y, list(generate_services(list.X[[n1]], mu, k_Y, Tmax)))
     list.Q = c(list.Q, list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3]))
   }
 }
@@ -111,7 +112,7 @@ for(n in 1:N1){
 
 list.dY = list()
 for(n in 1:N1){
-  list.dY[[n]] = list.Y[[n]][1:length(list.Y[[n]])] - list.X[[n]][1:length(list.X[[n]])]
+  list.dY[[n]] = list.Y[[n]][2:length(list.Y[[n]])] - list.Y[[n]][1:length(list.Y[[n]])-1]
 }
 
 source("./indicator_event.R")
