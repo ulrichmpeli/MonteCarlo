@@ -11,9 +11,9 @@
 # ========== 1.PREAMBULE =======================================================
 
 
-rm(list=ls())
-cat("\014") 
-
+#rm(list=ls())
+#cat("\014") 
+setwd("C:/Users/Ulrich M/Desktop/MonteCarlo-master/MonteCarlo-master")
 source("./generate_arrivals.R")
 source("./generate_services.R")
 source("./generate_queue.R")
@@ -22,8 +22,8 @@ source("./generate_queue.R")
 
 start.prog = Sys.time()
 Tmax = 100
-lambda = 0.3 #lambda grand <=> les clients arrivent rapidement
-mu = .7     #mu grand <=> les services sont rendus rapidement
+lambda = 0.7 #lambda grand <=> les clients arrivent rapidement
+mu = 0.3    #mu grand <=> les services sont rendus rapidement
 
 k_X = 1   #k_X = 1 pour exponentielle
 k_Y = 1   #k_Y = 1 pour exponentielle
@@ -36,7 +36,7 @@ end.time = Sys.time()
 cat(sprintf("Génération de X : %.2fs\n", end.time - start.time))
 
 start.time = Sys.time()
-Y = generate_services(X, mu, k_Y, Tmax)
+Y = generate_services(X, mu, k_Y)
 end.time = Sys.time()
 cat(sprintf("Génération de Y : %.2fs\n", end.time - start.time))
 
@@ -81,6 +81,7 @@ cat(sprintf("Programme : %.2fs\n \n", difftime(end.prog, start.prog, units = "se
 # ============== 6.CALCUL DES PROBABILITES =========================================
 
 l=20
+N2 = 500
 
 # Pilot Stage
 l0 = 8
@@ -95,11 +96,11 @@ for(n1 in 1:N1){
   # inilisation
   if(n1 == 1){
     list.X = list(generate_arrivals(Tmax, lambda, k_X))
-    list.Y = list(generate_services(list.X[[n1]], mu, k_Y, Tmax))
+    list.Y = list(generate_services(list.X[[n1]], mu, k_Y))
     list.Q = list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3])
   }else{
     list.X = c(list.X, list(generate_arrivals(Tmax, lambda, k_X)))
-    list.Y = c(list.Y, list(generate_services(list.X[[n1]], mu, k_Y, Tmax)))
+    list.Y = c(list.Y, list(generate_services(list.X[[n1]], mu, k_Y)))
     list.Q = c(list.Q, list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3]))
   }
 }
@@ -126,4 +127,60 @@ mu0 = mu
 new_v = update_v(lambda0, mu0, list.dX, list.dY, list.Q, lambda, mu, l0)
 print(new_v)
 
+# second stage
+
+epsilon = 0.05
+diflambda = abs(new_v[1] - lambda0)
+difmu = abs(new_v[2] - mu0)
+
+while (diflambda > epsilon | difmu > epsilon) {
+  lambda = lambda0
+  mu = mu0
+  lambda0 = new_v[1]
+  mu0 = new_v[2]
+  #X = generate_arrivals(Tmax, lambda, k_X)
+  #Y = generate_services(X, mu, k_Y)
+  #Q = generate_queue(X,Y)
+  
+  list.X = list()
+  list.Y = list()
+  list.Q = list()
+  
+  # génération des N2 queues
+  for(n1 in 1:N2){
+    # inilisation
+    if(n1 == 1){
+      list.X = list(generate_arrivals(Tmax, lambda, k_X))
+      list.Y = list(generate_services(list.X[[n1]], mu, k_Y))
+      list.Q = list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3])
+    }else{
+      list.X = c(list.X, list(generate_arrivals(Tmax, lambda, k_X)))
+      list.Y = c(list.Y, list(generate_services(list.X[[n1]], mu, k_Y)))
+      list.Q = c(list.Q, list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3]))
+    }
+  }
+  
+  # génération des intervalles d'arrivées et de sorties
+  list.dX = list()
+  for(n in 1:N2){
+    list.dX[[n]] = list.X[[n]][2:length(list.X[[n]])] - list.X[[n]][1:length(list.X[[n]])-1]
+  }
+  
+  list.dY = list()
+  for(n in 1:N2){
+    list.dY[[n]] = list.Y[[n]][2:length(list.Y[[n]])] - list.Y[[n]][1:length(list.Y[[n]])-1]
+  }
+  
+  source("./indicator_event.R")
+  source("./estimate_f.R")
+  source("./estimate_W.R")
+  source("./update_v.R")
+  
+  new_v = update_v(lambda0, mu0, list.dX, list.dY, list.Q, lambda, mu, l)
+  
+  diflambda = abs(new_v[1] - lambda0)
+  difmu = abs(new_v[2] - mu0)
+  
+  print(new_v)
+}
 

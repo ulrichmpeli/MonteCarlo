@@ -5,4 +5,3 @@ estimate_W = function(f1, f2){
   
   return(f1/f2)
 }
-# Ceci est un commentaire

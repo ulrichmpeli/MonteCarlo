@@ -1,4 +1,4 @@
-generate_services = function(vect.X, mu, k_Y=1, Tmax){
+generate_services = function(vect.X, mu, k_Y=1){
   # INPUT	vect.X	: le vecteur des dates d'arrivée
   #		            mu	  : paramètre d'échelle de la loi de Weibull
   #		            k_Y  : paramètre de forme de la loi de Weibull (1 par défaut)
