@@ -9,8 +9,12 @@ generate_suite_Weibull = function(Tmax, beta, k=1){
   # Création du vecteur (sous la forme d'une liste tout d'abord)
   vect.Weibull = 0
   
+  # rw : suit une loi de Weibull => la variable correspond à la date du premier arrivé/service
   rw = rweibull(1, scale = 1/beta, shape = k)
+  
+  # time servira à faire le cumul des temps 
   time = rw
+  
   i = 1
   while(time < Tmax){ #while nécessaire car le vecteur est de taile aléatoire
     vect.Weibull[i] = rw
