@@ -18,11 +18,16 @@ source("./generate_arrivals.R")
 source("./generate_departures.R")
 source("./generate_queue.R")
 
+source("./indicator_event.R")
+source("./estimate_f.R")
+source("./estimate_W.R")
+source("./update_v.R")
+
 # ========== 2.CHOIX DES PARAMETRES ============================================
 
 Tmax = 100
-lambda0 = 0.4 #lambda grand <=> les clients arrivent rapidement
-mu0 = 0.6    #mu grand <=> les services sont rendus rapidement
+lambda0 = 0.3 #lambda grand <=> les clients arrivent rapidement
+mu0 = 0.7    #mu grand <=> les services sont rendus rapidement
 
 k_X = 1   #k_X = 1 pour exponentielle
 k_Y = 1   #k_Y = 1 pour exponentielle
@@ -49,7 +54,7 @@ plot(Q$date,Q$number, type="s",
      ylab = "Nombre")
 abline(v = Tmax, col="red")
 
-hist(dX, main = "Distribution des arrivÃ©es", 
+hist(dX, main = "Distribution des arrivées", 
      xlab = "", ylab="", breaks = Tmax/10, freq = FALSE)
 lines(abs, dweibull(abs, scale = 1/lambda0, shape = k_X), col = "red")
 
@@ -69,10 +74,13 @@ cat(sprintf("Nombre moyen de clients : %.2f \n\n", (Q$number[-1]%*%(Q$date[-1]-Q
 
 # ============== 6.CALCUL DES PROBABILITES =========================================
 
-l=15
+l=20
+Niter = 5
+new_v = matrix(NA, nrow = Niter +2, ncol = 2)
+new_v[1,] = c(lambda0, mu0)
 
 # Pilot Stage
-l0 = 5
+l0 = 8
 N1 = 10000
 
 list.dX = list()
@@ -81,47 +89,36 @@ list.X = list()
 list.Y = list()
 list.Q = list()
 
-# gÃ©nÃ©ration des N1 queues
+lambda = lambda0
+mu = mu0
+
+# génération des N1 queues
 for(n1 in 1:N1){
   # initialisation
   if(n1 == 1){
-    list.dX = list(generate_suite_Weibull(Tmax, lambda0, k_X))
-    list.dY = list(generate_suite_Weibull(Tmax, mu0, k_Y))
+    list.dX = list(generate_suite_Weibull(Tmax, lambda, k_X))
+    list.dY = list(generate_suite_Weibull(Tmax, mu, k_Y))
     list.X = list(generate_arrivals(list.dX[[n1]]))
     list.Y = list(generate_departures(list.X[[n1]], list.dY[[n1]],Tmax))
     list.Q = list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3])
   }else{
-    list.dX = c(list.dX, list(generate_suite_Weibull(Tmax, lambda0, k_X)))
-    list.dY = c(list.dY, list(generate_suite_Weibull(Tmax, mu0, k_Y)))
+    list.dX = c(list.dX, list(generate_suite_Weibull(Tmax, lambda, k_X)))
+    list.dY = c(list.dY, list(generate_suite_Weibull(Tmax, mu, k_Y)))
     list.X = c(list.X, list(generate_arrivals(list.dX[[n1]])))
     list.Y = c(list.Y, list(generate_departures(list.X[[n1]], list.dY[[n1]],Tmax)))
     list.Q = c(list.Q, list(generate_queue(list.X[[n1]],list.Y[[n1]])[,3]))
   }
 }
 
-source("./indicator_event.R")
-source("./estimate_f.R")
-source("./estimate_W.R")
-source("./update_v.R")
-
-lambda = lambda0
-mu = mu0
-
-new_v = update_v(lambda0, mu0, list.dX, list.dY, list.Q, lambda, mu, l0)
+new_v[2,] = update_v(lambda0, mu0, list.dX, list.dY, list.Q, lambda, mu, l0)
 print(new_v)
 
 # second stage
-N2 = 500
+N2 = 100
 
-epsilon = 0.05
-diflambda = abs(new_v[1] - lambda)
-difmu = abs(new_v[2] - mu)
-
-while (diflambda > epsilon | difmu > epsilon) {
-  lambda1 = lambda
-  mu1 = mu
-  lambda = new_v[1]
-  mu = new_v[2]
+for(iter in 3:(Niter+2)) {
+  lambda = new_v[iter-1,1]
+  mu = new_v[iter-1,2]
 
   list.dX = list()
   list.dY = list()
@@ -129,7 +126,7 @@ while (diflambda > epsilon | difmu > epsilon) {
   list.Y = list()
   list.Q = list()
   
-  # gÃ©nÃ©ration des N1 queues
+  # génération des N1 queues
   for(n2 in 1:N2){
     # initialisation
     if(n2 == 1){
@@ -147,21 +144,16 @@ while (diflambda > epsilon | difmu > epsilon) {
     }
   }
 
-  new_v = update_v(lambda1, mu1, list.dX, list.dY, list.Q, lambda, mu, l)
-  
-  diflambda = abs(new_v[1] - lambda)
-  difmu = abs(new_v[2] - mu)
-  
+  new_v[iter,] = update_v(lambda0, mu0, list.dX, list.dY, list.Q, lambda, mu, l)  
   print(new_v)
 }
-
 
 # Third stage
 
 #génération de la queue avec les paramètres optimaux
 
-lambda_opt = new_v[1]
-mu_opt = new_v[2]
+lambda_opt = new_v[dim(new_v)[1], 1]
+mu_opt = new_v[dim(new_v)[1],2]
 
 #lambda_opt = 0.716
 #mu_opt = 0.296
